@@ -1,0 +1,25 @@
+{
+  "local": [
+    {
+      "server_label": "echo",
+      "server_description": "Local test MCP server with simple echo and add tools.",
+      "transport": "stdio",
+      "command": "python",
+      "args": ["mcp_servers/echo/server.py"]
+    },
+    {
+      "server_label": "test-empty",
+      "server_description": "Local MCP server that intentionally returns an empty tools list.",
+      "transport": "stdio",
+      "command": "python",
+      "args": ["mcp_servers/test_empty/server.py"]
+    }
+  ],
+  "remote": [
+    {
+      "server_label": "broken-remote",
+      "server_description": "Intentionally broken remote MCP server for diagnostics testing.",
+      "server_url": "http://mcp.invalid.example/sse"
+    }
+  ]
+}
