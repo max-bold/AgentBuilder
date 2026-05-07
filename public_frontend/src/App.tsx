@@ -223,11 +223,13 @@ function SidebarChatItem({
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
-    <div className="relative flex min-w-0 items-center gap-1">
+    <div
+      className={`relative flex h-9 min-w-0 items-center gap-1 rounded-md transition ${
+        active ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"
+      }`}
+    >
       <button
-        className={`flex h-9 min-w-0 flex-1 items-center gap-2 rounded-md px-2 text-left text-sm transition ${
-          active ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"
-        }`}
+        className="flex h-full min-w-0 flex-1 items-center gap-2 rounded-md px-2 text-left text-sm"
         onClick={onSelect}
         type="button"
       >
@@ -236,7 +238,7 @@ function SidebarChatItem({
       </button>
       <Button
         aria-label={`${session.title} actions`}
-        className="size-8"
+        className="mr-0.5 size-8 shrink-0"
         size="icon"
         variant="ghost"
         onClick={() => setMenuOpen((current) => !current)}

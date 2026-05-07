@@ -305,11 +305,13 @@ function SidebarChatItem({
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
-    <div className="relative flex min-w-0 items-center gap-1">
+    <div
+      className={`relative flex h-8 min-w-0 items-center gap-1 rounded-lg transition ${
+        active ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"
+      }`}
+    >
       <button
-        className={`flex h-8 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-left text-sm transition ${
-          active ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"
-        }`}
+        className="flex h-full min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-left text-sm"
         onClick={onSelect}
         type="button"
       >
@@ -318,7 +320,7 @@ function SidebarChatItem({
       </button>
       <Button
         aria-label={`${session.title} actions`}
-        className="size-7"
+        className="mr-0.5 size-7 shrink-0"
         size="icon-sm"
         variant="ghost"
         onClick={() => setMenuOpen((current) => !current)}
@@ -326,7 +328,7 @@ function SidebarChatItem({
         <MoreHorizontal className="size-4" />
       </Button>
       {menuOpen && (
-        <div className="absolute right-0 top-8 z-20 w-40 rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md">
+        <div className="absolute right-0 top-9 z-20 w-40 rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md">
           <button
             className="flex h-8 w-full items-center gap-2 rounded-sm px-2 text-left text-sm hover:bg-muted"
             onClick={() => {
