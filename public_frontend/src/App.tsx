@@ -5,8 +5,11 @@ import {
   Loader2,
   LogOut,
   MessageSquare,
+  MoreHorizontal,
+  Pencil,
   Plus,
   Send,
+  Trash2,
   UserRound,
 } from "lucide-react"
 
@@ -77,6 +80,39 @@ function App() {
     }
   }
 
+  async function renameChat(session: ChatSession, title: string) {
+    const nextTitle = title.trim()
+    if (!nextTitle || nextTitle === session.title) return
+    setError("")
+    try {
+      const updated = await api.renameSimpleChatSession(session.id, nextTitle)
+      setChatSessions((items) =>
+        items.map((item) => (item.id === updated.id ? updated : item)),
+      )
+    } catch (err) {
+      setError(readError(err, "Failed to rename chat"))
+    }
+  }
+
+  async function promptRenameChat(session: ChatSession) {
+    const title = window.prompt("Rename chat", session.title)
+    if (title === null) return
+    await renameChat(session, title)
+  }
+
+  async function deleteChat(session: ChatSession) {
+    if (!window.confirm(`Delete "${session.title}"?`)) return
+    setError("")
+    try {
+      await api.deleteSimpleChatSession(session.id)
+      const next = chatSessions.filter((item) => item.id !== session.id)
+      setChatSessions(next)
+      if (activeChatId === session.id) setActiveChatId(next[0]?.id || null)
+    } catch (err) {
+      setError(readError(err, "Failed to delete chat"))
+    }
+  }
+
   function touchChat(sessionId: number) {
     const now = new Date().toISOString()
     setChatSessions((items) =>
@@ -134,19 +170,14 @@ function App() {
         </div>
         <nav className="mt-2 space-y-1">
           {chatSessions.map((session) => (
-            <button
-              className={`flex h-9 w-full min-w-0 items-center gap-2 rounded-md px-2 text-left text-sm transition ${
-                activeChatId === session.id
-                  ? "bg-secondary text-secondary-foreground"
-                  : "hover:bg-muted"
-              }`}
+            <SidebarChatItem
+              active={activeChatId === session.id}
               key={session.id}
-              onClick={() => setActiveChatId(session.id)}
-              type="button"
-            >
-              <MessageSquare className="size-4 shrink-0 text-muted-foreground" />
-              <span className="truncate">{session.title}</span>
-            </button>
+              session={session}
+              onDelete={() => deleteChat(session)}
+              onRename={() => promptRenameChat(session)}
+              onSelect={() => setActiveChatId(session.id)}
+            />
           ))}
         </nav>
 
@@ -165,10 +196,78 @@ function App() {
           chatSessions.find((session) => session.id === activeChatId)?.title ||
           "Chat"
         }
+        onRenameChat={(title) => {
+          const session = chatSessions.find((item) => item.id === activeChatId)
+          if (session) void renameChat(session, title)
+        }}
         onCreateChat={createChat}
         onMessageSent={touchChat}
       />
     </main>
+  )
+}
+
+function SidebarChatItem({
+  active,
+  session,
+  onDelete,
+  onRename,
+  onSelect,
+}: {
+  active: boolean
+  session: ChatSession
+  onDelete: () => void
+  onRename: () => void
+  onSelect: () => void
+}) {
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  return (
+    <div className="relative flex min-w-0 items-center gap-1">
+      <button
+        className={`flex h-9 min-w-0 flex-1 items-center gap-2 rounded-md px-2 text-left text-sm transition ${
+          active ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"
+        }`}
+        onClick={onSelect}
+        type="button"
+      >
+        <MessageSquare className="size-4 shrink-0 text-muted-foreground" />
+        <span className="truncate">{session.title}</span>
+      </button>
+      <Button
+        aria-label={`${session.title} actions`}
+        className="size-8"
+        size="icon"
+        variant="ghost"
+        onClick={() => setMenuOpen((current) => !current)}
+      >
+        <MoreHorizontal className="size-4" />
+      </Button>
+      {menuOpen && (
+        <div className="absolute right-0 top-9 z-20 w-40 rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md">
+          <button
+            className="flex h-8 w-full items-center gap-2 rounded-sm px-2 text-left text-sm hover:bg-muted"
+            onClick={() => {
+              setMenuOpen(false)
+              onRename()
+            }}
+            type="button"
+          >
+            <Pencil className="size-3.5" /> Rename
+          </button>
+          <button
+            className="flex h-8 w-full items-center gap-2 rounded-sm px-2 text-left text-sm text-destructive hover:bg-destructive/10"
+            onClick={() => {
+              setMenuOpen(false)
+              onDelete()
+            }}
+            type="button"
+          >
+            <Trash2 className="size-3.5" /> Delete
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -281,16 +380,20 @@ function AuthPage({
 function ChatPage({
   chatId,
   chatTitle,
+  onRenameChat,
   onCreateChat,
   onMessageSent,
 }: {
   chatId: number | null
   chatTitle: string
+  onRenameChat: (title: string) => void
   onCreateChat: () => void
   onMessageSent: (chatId: number) => void
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [message, setMessage] = useState("")
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [draftTitle, setDraftTitle] = useState(chatTitle)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
   const listRef = useRef<HTMLDivElement | null>(null)
@@ -320,6 +423,10 @@ function ChatPage({
   useEffect(() => {
     if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight
   }, [messages, busy])
+
+  useEffect(() => {
+    if (!editingTitle) setDraftTitle(chatTitle)
+  }, [chatTitle, editingTitle])
 
   async function submit(event: FormEvent) {
     event.preventDefault()
@@ -360,11 +467,48 @@ function ChatPage({
     }
   }
 
+  function saveTitle() {
+    const nextTitle = draftTitle.trim()
+    setEditingTitle(false)
+    if (nextTitle && nextTitle !== chatTitle) onRenameChat(nextTitle)
+    else setDraftTitle(chatTitle)
+  }
+
+  function handleTitleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter") {
+      event.preventDefault()
+      saveTitle()
+    }
+    if (event.key === "Escape") {
+      event.preventDefault()
+      setDraftTitle(chatTitle)
+      setEditingTitle(false)
+    }
+  }
+
   return (
     <section className="grid min-h-svh grid-rows-[auto_minmax(0,1fr)_auto]">
       <header className="flex min-h-16 items-center justify-between gap-3 border-b border-border px-4 py-3 md:px-6">
         <div className="min-w-0">
-          <h1 className="truncate text-base font-semibold">{chatTitle}</h1>
+          {editingTitle ? (
+            <input
+              aria-label="Chat title"
+              autoFocus
+              className="h-8 max-w-full rounded-md border border-input bg-background px-2 text-base font-semibold outline-none focus:ring-2 focus:ring-ring"
+              value={draftTitle}
+              onBlur={saveTitle}
+              onChange={(event) => setDraftTitle(event.target.value)}
+              onKeyDown={handleTitleKeyDown}
+            />
+          ) : (
+            <button
+              className="block max-w-full truncate rounded-sm text-left text-base font-semibold outline-none hover:text-primary focus:ring-2 focus:ring-ring"
+              onClick={() => setEditingTitle(true)}
+              type="button"
+            >
+              {chatTitle}
+            </button>
+          )}
           <p className="truncate text-sm text-muted-foreground">
             Responses API chat
           </p>
