@@ -90,4 +90,9 @@ Use AgentBuilder as a scaffold for your own AI application:
 4. Add reusable workflows under `skills/<name>/SKILL.md`.
 5. Keep `dev_frontend` for debugging and adapt `public_frontend` for real users.
 
-See [docs/development.md](docs/development.md), [docs/mcp.md](docs/mcp.md), [docs/prompts.md](docs/prompts.md), and [docs/skills.md](docs/skills.md).
+## Read more
+
+- [docs/development.md](docs/development.md): local development setup, backend/frontend ports, proxy behavior, and important API endpoints.
+- [docs/mcp.md](docs/mcp.md): MCP configuration, local diagnostic servers, and how AgentBuilder exposes MCP tools to the model.
+- [docs/prompts.md](docs/prompts.md): how `AGENT_INSTRUCTIONS.md` and `ASSISTANT_PROMPT.md` are loaded, when they are sent, and how to edit them safely.
+- [docs/skills.md](docs/skills.md): skill directory layout, `SKILL.md` validation rules, registry lifecycle, explicit `@skill-name` mentions, and shell-tool execution flow.
