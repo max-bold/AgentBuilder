@@ -5,6 +5,8 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronRight,
+  Eye,
+  EyeOff,
   FileText,
   Loader2,
   LogOut,
@@ -366,8 +368,28 @@ function AuthPage({
   const [login, setLogin] = useState("developer")
   const [email, setEmail] = useState("developer@example.com")
   const [password, setPassword] = useState("password")
+  const [passwordVisible, setPasswordVisible] = useState(false)
   const [error, setError] = useState(initialError || "")
   const [busy, setBusy] = useState(false)
+  const revealTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(
+    null,
+  )
+
+  useEffect(() => {
+    if (!passwordVisible) return
+
+    revealTimerRef.current = window.setTimeout(() => {
+      setPasswordVisible(false)
+      revealTimerRef.current = null
+    }, 4000)
+
+    return () => {
+      if (revealTimerRef.current) {
+        window.clearTimeout(revealTimerRef.current)
+        revealTimerRef.current = null
+      }
+    }
+  }, [passwordVisible])
 
   async function submit(event: FormEvent) {
     event.preventDefault()
@@ -442,16 +464,31 @@ function AuthPage({
             />
           </label>
         )}
-        <label className="mt-4 block text-sm font-medium">
-          Password
-          <input
-            className="mt-2 h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-          />
-        </label>
+        <div className="mt-4 text-sm font-medium">
+          <label htmlFor="dev-auth-password">Password</label>
+          <div className="relative mt-2">
+            <input
+              id="dev-auth-password"
+              className="h-10 w-full rounded-md border border-input bg-background px-3 pr-10 text-sm outline-none focus:ring-2 focus:ring-ring"
+              type={passwordVisible ? "text" : "password"}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+            />
+            <button
+              aria-label={passwordVisible ? "Hide password" : "Show password"}
+              className="absolute right-1 top-1 flex size-8 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              type="button"
+              onClick={() => setPasswordVisible((current) => !current)}
+            >
+              {passwordVisible ? (
+                <EyeOff className="size-4" />
+              ) : (
+                <Eye className="size-4" />
+              )}
+            </button>
+          </div>
+        </div>
         <Button className="mt-5 w-full" disabled={busy}>
           {busy && <Loader2 className="size-4 animate-spin" />}
           {mode === "login" ? "Sign in" : "Create account"}

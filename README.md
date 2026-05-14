@@ -16,6 +16,9 @@ It provides a backend, a developer UI, a public chat UI, local skills, MCP diagn
 - Local skills:
   - `summarize-text`
   - `inspect-mcp`
+- Prompt split under `prompts/`:
+  - `AGENT_INSTRUCTIONS.md` for compact always-on behavior.
+  - `ASSISTANT_PROMPT.md` for first-turn application context.
 
 ## Quick start
 
@@ -87,4 +90,4 @@ Use AgentBuilder as a scaffold for your own AI application:
 4. Add reusable workflows under `skills/<name>/SKILL.md`.
 5. Keep `dev_frontend` for debugging and adapt `public_frontend` for real users.
 
-See [docs/mcp.md](docs/mcp.md), [docs/skills.md](docs/skills.md), and [docs/development.md](docs/development.md).
+See [docs/development.md](docs/development.md), [docs/mcp.md](docs/mcp.md), [docs/prompts.md](docs/prompts.md), and [docs/skills.md](docs/skills.md).
